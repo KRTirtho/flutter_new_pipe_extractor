@@ -1,7 +1,3 @@
-#
-# To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html.
-# Run `pod lib lint flutter_new_pipe_extractor.podspec` to validate before publishing.
-#
 Pod::Spec.new do |s|
   s.name             = 'flutter_new_pipe_extractor'
   s.version          = '0.0.1'
@@ -14,17 +10,27 @@ A new Flutter plugin project.
   s.author           = { 'Your Company' => 'email@example.com' }
 
   s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
-
-  # If your plugin requires a privacy manifest, for example if it collects user
-  # data, update the PrivacyInfo.xcprivacy file to describe your plugin's
-  # privacy impact, and then uncomment this line. For more information,
-  # see https://developer.apple.com/documentation/bundleresources/privacy_manifest_files
-  # s.resource_bundles = {'flutter_new_pipe_extractor_privacy' => ['Resources/PrivacyInfo.xcprivacy']}
+  s.source_files     = 'Classes/**/*'
 
   s.dependency 'FlutterMacOS'
 
   s.platform = :osx, '10.11'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   s.swift_version = '5.0'
+
+  # --- Added section ---
+  s.prepare_command = <<-CMD
+    set -e
+    ASSETS_DIR="../assets"
+    ZIP_URL="https://github.com/KRTirtho/NewPipeCLI/releases/download/v0.1.0/NewPipeCLI-macos-universal.zip"
+    ZIP_PATH="$ASSETS_DIR/NewPipeCLI-macos-universal.zip"
+
+    mkdir -p "$ASSETS_DIR"
+
+    if [ ! -f "$ZIP_PATH" ]; then
+      echo "Downloading NewPipeCLI for macOS..."
+      curl -L "$ZIP_URL" -o "$ZIP_PATH"
+    fi
+  CMD
+  # --- End of added section ---
 end

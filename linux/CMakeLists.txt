@@ -43,16 +43,24 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE PkgConfig::GTK)
 
 # === Download NewPipeCLI binary ===
 set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../assets")
-set(NEWPIPECLI_ZIP "${ASSETS_DIR}/NewPipeCLI-linux-x64.zip")
-set(NEWPIPECLI_URL "https://github.com/KRTirtho/NewPipeCLI/releases/download/v0.1.0/NewPipeCLI-linux-x64.zip")
-
 file(MAKE_DIRECTORY ${ASSETS_DIR})
 
+# Detect system architecture
+string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" ARCH)
+if(ARCH MATCHES "aarch64" OR ARCH MATCHES "arm64")
+  set(NEWPIPECLI_FILE "NewPipeCLI-linux-arm64.zip")
+else()
+  set(NEWPIPECLI_FILE "NewPipeCLI-linux-x64.zip")
+endif()
+
+set(NEWPIPECLI_ZIP "${ASSETS_DIR}/${NEWPIPECLI_FILE}")
+set(NEWPIPECLI_URL "https://github.com/KRTirtho/NewPipeCLI/releases/download/v0.1.0/${NEWPIPECLI_FILE}")
+
 if(NOT EXISTS ${NEWPIPECLI_ZIP})
-  message(STATUS "Downloading NewPipeCLI binary...")
+  message(STATUS "Downloading NewPipeCLI binary for ${ARCH}...")
   file(DOWNLOAD ${NEWPIPECLI_URL} ${NEWPIPECLI_ZIP} SHOW_PROGRESS)
 else()
-  message(STATUS "NewPipeCLI already downloaded.")
+  message(STATUS "NewPipeCLI already downloaded for ${ARCH}.")
 endif()
 
 # List of absolute paths to libraries that should be bundled with the plugin.
