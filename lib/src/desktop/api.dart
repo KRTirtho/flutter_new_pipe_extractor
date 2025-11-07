@@ -39,8 +39,8 @@ class NewPipeDesktopApiImpl implements NewPipeExtractor {
             : "-arm64";
     final zipName =
         platformFileNames["${Platform.operatingSystem}$arch"] as String;
-    final bytes = await rootBundle.load(
-        join('packages', 'flutter_new_pipe_extractor', 'assets', zipName));
+    final bytes = await rootBundle
+        .load('packages/flutter_new_pipe_extractor/assets/$zipName');
     final data = bytes.buffer.asUint8List();
 
     final tempDir = await getTemporaryDirectory();

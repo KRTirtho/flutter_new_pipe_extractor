@@ -46,6 +46,6 @@ flutter:
       linux:
         pluginClass: FlutterNewPipeExtractorPlugin
       windows:
-        pluginClass: FlutterNewPipeExtractorPlugin
+        pluginClass: FlutterNewPipeExtractorPluginCApi
       macos:
         pluginClass: FlutterNewPipeExtractorPlugin
