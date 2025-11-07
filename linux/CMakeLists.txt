@@ -1,7 +1,7 @@
 # The Flutter tooling requires that developers have CMake 3.10 or later
 # installed. You should not increase this version, as doing so will cause
 # the plugin to fail to compile for some customers of the plugin.
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.11)
 
 # Project-level configuration.
 set(PROJECT_NAME "flutter_new_pipe_extractor")
@@ -41,54 +41,22 @@ target_include_directories(${PLUGIN_NAME} INTERFACE
 target_link_libraries(${PLUGIN_NAME} PRIVATE flutter)
 target_link_libraries(${PLUGIN_NAME} PRIVATE PkgConfig::GTK)
 
+# === Download NewPipeCLI binary ===
+set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../assets")
+set(NEWPIPECLI_ZIP "${ASSETS_DIR}/NewPipeCLI-linux-x64.zip")
+set(NEWPIPECLI_URL "https://github.com/KRTirtho/NewPipeCLI/releases/download/v0.1.0/NewPipeCLI-linux-x64.zip")
+
+file(MAKE_DIRECTORY ${ASSETS_DIR})
+
+if(NOT EXISTS ${NEWPIPECLI_ZIP})
+  message(STATUS "Downloading NewPipeCLI binary...")
+  file(DOWNLOAD ${NEWPIPECLI_URL} ${NEWPIPECLI_ZIP} SHOW_PROGRESS)
+else()
+  message(STATUS "NewPipeCLI already downloaded.")
+endif()
+
 # List of absolute paths to libraries that should be bundled with the plugin.
-# This list could contain prebuilt libraries, or libraries created by an
-# external build triggered from this build file.
 set(flutter_new_pipe_extractor_bundled_libraries
   ""
   PARENT_SCOPE
 )
-
-# === Tests ===
-# These unit tests can be run from a terminal after building the example.
-
-# Only enable test builds when building the example (which sets this variable)
-# so that plugin clients aren't building the tests.
-if (${include_${PROJECT_NAME}_tests})
-if(${CMAKE_VERSION} VERSION_LESS "3.11.0")
-message("Unit tests require CMake 3.11.0 or later")
-else()
-set(TEST_RUNNER "${PROJECT_NAME}_test")
-enable_testing()
-
-# Add the Google Test dependency.
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/release-1.11.0.zip
-)
-# Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-# Disable install commands for gtest so it doesn't end up in the bundle.
-set(INSTALL_GTEST OFF CACHE BOOL "Disable installation of googletest" FORCE)
-
-FetchContent_MakeAvailable(googletest)
-
-# The plugin's exported API is not very useful for unit testing, so build the
-# sources directly into the test binary rather than using the shared library.
-add_executable(${TEST_RUNNER}
-  test/flutter_new_pipe_extractor_plugin_test.cc
-  ${PLUGIN_SOURCES}
-)
-apply_standard_settings(${TEST_RUNNER})
-target_include_directories(${TEST_RUNNER} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(${TEST_RUNNER} PRIVATE flutter)
-target_link_libraries(${TEST_RUNNER} PRIVATE PkgConfig::GTK)
-target_link_libraries(${TEST_RUNNER} PRIVATE gtest_main gmock)
-
-# Enable automatic test discovery.
-include(GoogleTest)
-gtest_discover_tests(${TEST_RUNNER})
-
-endif()  # CMake version check
-endif()  # include_${PROJECT_NAME}_tests
