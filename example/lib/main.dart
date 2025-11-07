@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -30,7 +32,11 @@ class _MyAppState extends State<MyApp> {
     final results = await NewPipeExtractor.search('How Long - Charlie Puth');
     // final results = await NewPipeExtractor.getVideoInfo('nfs8NYg7yQM');
 
-    print("Video title: $results");
+    debugPrint("Video title: ${results.map((result)=>result.name)}");
+
+    final streams = await NewPipeExtractor.getVideoInfo("8kxufj_snhI");
+
+    debugPrint(const JsonEncoder.withIndent(" ").convert(streams.toJson()));
 
     return results;
   }

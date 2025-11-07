@@ -56,7 +56,7 @@ set(NEWPIPECLI_ZIP "${ASSETS_DIR}/NewPipeCLI-windows-x64.zip")
 set(NEWPIPECLI_URL "https://github.com/KRTirtho/NewPipeCLI/releases/download/v0.1.0/NewPipeCLI-windows-x64.zip")
 
 # Expected SHA256 checksum of the release zip
-set(NEWPIPECLI_SHA256 "432eb9901364f030ce6439095986adbcdf3c95f8939ad91e7414d4ce8053cf2e")
+set(NEWPIPECLI_SHA256 "b8e0f0754f7c612197630511130390bd7ea6348c39f49ae6be2b394717600199")
 
 # Default: need to download
 set(SHOULD_DOWNLOAD TRUE)
