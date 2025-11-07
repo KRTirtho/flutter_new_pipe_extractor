@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter_new_pipe_extractor/src/desktop/api.dart';
 import 'package:flutter_new_pipe_extractor/src/models/models.dart';
 import 'package:flutter_new_pipe_extractor/src/pigeon/newpipe_api.g.dart'
     as api;
@@ -6,7 +9,8 @@ import 'package:flutter_new_pipe_extractor/src/utils/utils.dart';
 export 'src/models/models.dart';
 
 abstract class NewPipeExtractor {
-  static final _hostApi = api.NewPipeExtractor();
+  static final _hostApi =
+      Platform.isAndroid ? api.NewPipeExtractor() : NewPipeDesktopApiImpl();
 
   static Future<void> init() {
     return _hostApi.init();

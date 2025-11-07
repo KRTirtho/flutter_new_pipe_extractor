@@ -33,3 +33,5 @@ migrate_working_dir/
 build/
 
 **/.cxx
+
+assets/*.zip
