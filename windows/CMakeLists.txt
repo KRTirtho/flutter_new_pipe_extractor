@@ -48,18 +48,40 @@ target_include_directories(${PLUGIN_NAME} INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(${PLUGIN_NAME} PRIVATE flutter flutter_wrapper_plugin)
 
-# === Download NewPipeCLI binary for Windows ===
+# === Download NewPipeCLI binary for Windows with SHA256 check ===
 set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../assets")
+file(MAKE_DIRECTORY ${ASSETS_DIR})
+
 set(NEWPIPECLI_ZIP "${ASSETS_DIR}/NewPipeCLI-windows-x64.zip")
 set(NEWPIPECLI_URL "https://github.com/KRTirtho/NewPipeCLI/releases/download/v0.1.0/NewPipeCLI-windows-x64.zip")
 
-file(MAKE_DIRECTORY ${ASSETS_DIR})
+# Expected SHA256 checksum of the release zip
+set(NEWPIPECLI_SHA256 "4abbc06f47966eafbd06e1475ada85c8890c226ce9e8a659e68bd464b78294c6")
 
-if(NOT EXISTS ${NEWPIPECLI_ZIP})
+# Default: need to download
+set(SHOULD_DOWNLOAD TRUE)
+
+# If zip exists, verify checksum
+if(EXISTS ${NEWPIPECLI_ZIP})
+  file(SHA256 ${NEWPIPECLI_ZIP} EXISTING_SHA256)
+  if(EXISTING_SHA256 STREQUAL NEWPIPECLI_SHA256)
+    message(STATUS "NewPipeCLI zip already exists and verified.")
+    set(SHOULD_DOWNLOAD FALSE)
+  else()
+    message(WARNING "Existing NewPipeCLI zip checksum mismatch, re-downloading...")
+  endif()
+endif()
+
+# Download if missing or invalid
+if(SHOULD_DOWNLOAD)
   message(STATUS "Downloading NewPipeCLI for Windows...")
   file(DOWNLOAD ${NEWPIPECLI_URL} ${NEWPIPECLI_ZIP} SHOW_PROGRESS)
-else()
-  message(STATUS "NewPipeCLI for Windows already downloaded.")
+  
+  # Verify checksum after download
+  file(SHA256 ${NEWPIPECLI_ZIP} DOWNLOADED_SHA256)
+  if(NOT DOWNLOADED_SHA256 STREQUAL NEWPIPECLI_SHA256)
+    message(FATAL_ERROR "Downloaded NewPipeCLI zip checksum mismatch! Aborting build.")
+  endif()
 endif()
 
 # List of absolute paths to libraries that should be bundled with the plugin.

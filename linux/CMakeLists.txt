@@ -49,18 +49,39 @@ file(MAKE_DIRECTORY ${ASSETS_DIR})
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" ARCH)
 if(ARCH MATCHES "aarch64" OR ARCH MATCHES "arm64")
   set(NEWPIPECLI_FILE "NewPipeCLI-linux-arm64.zip")
+  set(NEWPIPECLI_SHA256 "1da4cea8e2b7daec616c7b17334182fcc5969e9b435a176549845fb56a1475d4")
 else()
   set(NEWPIPECLI_FILE "NewPipeCLI-linux-x64.zip")
+  set(NEWPIPECLI_SHA256 "9712f05be02959d3e7f659c025306f34d1162f5f965fd70a576c0ca35160e882")
 endif()
 
 set(NEWPIPECLI_ZIP "${ASSETS_DIR}/${NEWPIPECLI_FILE}")
 set(NEWPIPECLI_URL "https://github.com/KRTirtho/NewPipeCLI/releases/download/v0.1.0/${NEWPIPECLI_FILE}")
 
-if(NOT EXISTS ${NEWPIPECLI_ZIP})
-  message(STATUS "Downloading NewPipeCLI binary for ${ARCH}...")
+# Default: need to download
+set(SHOULD_DOWNLOAD TRUE)
+
+# Verify checksum if file exists
+if(EXISTS ${NEWPIPECLI_ZIP})
+  file(SHA256 ${NEWPIPECLI_ZIP} EXISTING_SHA256)
+  if(EXISTING_SHA256 STREQUAL NEWPIPECLI_SHA256)
+    message(STATUS "NewPipeCLI zip already exists and verified for ${ARCH}.")
+    set(SHOULD_DOWNLOAD FALSE)
+  else()
+    message(WARNING "Existing NewPipeCLI zip checksum mismatch for ${ARCH}, re-downloading...")
+  endif()
+endif()
+
+# Download if missing or invalid
+if(SHOULD_DOWNLOAD)
+  message(STATUS "Downloading NewPipeCLI for ${ARCH}...")
   file(DOWNLOAD ${NEWPIPECLI_URL} ${NEWPIPECLI_ZIP} SHOW_PROGRESS)
-else()
-  message(STATUS "NewPipeCLI already downloaded for ${ARCH}.")
+
+  # Verify checksum after download
+  file(SHA256 ${NEWPIPECLI_ZIP} DOWNLOADED_SHA256)
+  if(NOT DOWNLOADED_SHA256 STREQUAL NEWPIPECLI_SHA256)
+    message(FATAL_ERROR "Downloaded NewPipeCLI zip checksum mismatch for ${ARCH}! Aborting build.")
+  endif()
 endif()
 
 # List of absolute paths to libraries that should be bundled with the plugin.
