@@ -26,7 +26,7 @@ A new Flutter plugin project.
     ZIP_PATH="$ASSETS_DIR/NewPipeCLI-macos-universal.zip"
 
     # Expected SHA256 checksum of the release zip
-    EXPECTED_SHA256="c0d97cc7f39967b58169e05fa87baba393f4a587210e446d88b99c06b5d02552"
+    EXPECTED_SHA256="5c38c267a82a8fbd22bb2a60299cc30edc078d2e0788724459ab2df1e5685b44"
 
     mkdir -p "$ASSETS_DIR"
 
