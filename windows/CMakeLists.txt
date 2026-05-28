@@ -53,10 +53,10 @@ set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../assets")
 file(MAKE_DIRECTORY ${ASSETS_DIR})
 
 set(NEWPIPECLI_ZIP "${ASSETS_DIR}/NewPipeCLI-windows-x64.zip")
-set(NEWPIPECLI_URL "https://github.com/KRTirtho/NewPipeCLI/releases/download/v0.1.1/NewPipeCLI-windows-x64.zip")
+set(NEWPIPECLI_URL "https://github.com/KRTirtho/NewPipeCLI/releases/download/v0.1.2/NewPipeCLI-windows-x64.zip")
 
 # Expected SHA256 checksum of the release zip
-set(NEWPIPECLI_SHA256 "724ccd59a042d67800b185ff2caa171a5a59f0d7ab684db330003716dd20fdeb")
+set(NEWPIPECLI_SHA256 "5ad80d5b3661ebf67c684d3041b81666a424fb314adf3f99df8d81944cbab95c")
 
 # Default: need to download
 set(SHOULD_DOWNLOAD TRUE)
