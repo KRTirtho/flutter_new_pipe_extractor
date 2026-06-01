@@ -24,7 +24,7 @@ class NewPipeDartImpl : NewPipeExtractor {
     }
 
     override fun init() {
-        NewPipe.init(DownloaderImpl((OkHttpClient())))
+        NewPipe.init(DownloaderImpl.init((OkHttpClient())))
     }
 
 

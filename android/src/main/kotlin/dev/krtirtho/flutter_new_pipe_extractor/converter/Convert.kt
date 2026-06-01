@@ -117,6 +117,9 @@ class Convert {
         }
 
         fun streamInfoMap(streamInfo: StreamInfo): Map<String, Any?> {
+            val audioStreams = streamInfo.audioStreams.map(::audioStreamMap)
+            val videoStreams = streamInfo.videoStreams.map(::videoStreamMap)
+
             return mapOf(
                 "id" to streamInfo.id,
                 "url" to streamInfo.url,
@@ -140,8 +143,9 @@ class Convert {
                 "subChannelName" to streamInfo.subChannelName,
                 "subChannelUrl" to streamInfo.subChannelUrl,
                 "subChannelAvatars" to streamInfo.subChannelAvatars,
-                "videoStreams" to streamInfo.videoStreams.map(::videoStreamMap),
-                "audioStreams" to streamInfo.audioStreams.map(::audioStreamMap),
+                "videoStreams" to videoStreams,
+                // Falling back to muxed streams if no separate audio streams are available
+                "audioStreams" to audioStreams,
                 "videoOnlyStreams" to streamInfo.videoOnlyStreams.map(::videoStreamMap),
                 "dashMpdUrl" to streamInfo.dashMpdUrl,
                 "hlsUrl" to streamInfo.hlsUrl,

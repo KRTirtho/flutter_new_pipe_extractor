@@ -9,27 +9,57 @@ import org.schabi.newpipe.extractor.downloader.Response
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
 import java.io.IOException
 
-internal class DownloaderImpl(private val client: OkHttpClient) : Downloader() {
+internal class DownloaderImpl private constructor(private val client: OkHttpClient) : Downloader() {
 
     private val cookies = HashMap<String, String>()
 
-    private fun getCookies(url: String): String {
-        val resultCookies: MutableList<String> = ArrayList()
-        if (url.contains(YOUTUBE_DOMAIN)) {
-            val youtubeCookie = getCookie(YOUTUBE_RESTRICTED_MODE_COOKIE_KEY)
-            if (youtubeCookie != null) {
-                resultCookies.add(youtubeCookie)
-            }
-        }
-        val recaptchaCookie = getCookie(RECAPTCHA_COOKIES_KEY)
-        if (recaptchaCookie != null) {
-            resultCookies.add(recaptchaCookie)
-        }
-        return concatCookies(resultCookies)
+    fun getClient(): OkHttpClient {
+        return client
     }
 
-    private fun getCookie(key: String): String? {
+    fun getCookies(url: String): String {
+        val youtubeCookie = if (url.contains(YOUTUBE_DOMAIN)) {
+            getCookie(YOUTUBE_RESTRICTED_MODE_COOKIE_KEY)
+        } else {
+            null
+        }
+
+        val recaptchaCookie = getCookie("recaptcha_cookies")
+
+        return listOfNotNull(youtubeCookie, recaptchaCookie)
+            .flatMap { splitCookies(it) }
+            .distinct()
+            .joinToString("; ")
+    }
+
+    fun getCookie(key: String): String? {
         return cookies[key]
+    }
+
+    fun setCookie(key: String, cookie: String) {
+        cookies[key] = cookie
+    }
+
+    fun removeCookie(key: String) {
+        cookies.remove(key)
+    }
+
+    /**
+     * Get the size of the content that the url is pointing by firing a HEAD request.
+     *
+     * @param url an url pointing to the content
+     * @return the size of the content, in bytes
+     */
+    @Throws(IOException::class)
+    fun getContentLength(url: String): Long {
+        return try {
+            val response = head(url)
+            response.getHeader("Content-Length")?.toLong() ?: throw IOException("Missing content length")
+        } catch (e: NumberFormatException) {
+            throw IOException("Invalid content length", e)
+        } catch (e: ReCaptchaException) {
+            throw IOException(e)
+        }
     }
 
     @Throws(IOException::class, ReCaptchaException::class)
@@ -41,54 +71,70 @@ internal class DownloaderImpl(private val client: OkHttpClient) : Downloader() {
         val requestBody: RequestBody? = dataToSend?.toRequestBody()
 
         val requestBuilder = okhttp3.Request.Builder()
-            .method(httpMethod, requestBody).url(url)
+            .method(httpMethod, requestBody)
+            .url(url)
             .addHeader("User-Agent", USER_AGENT)
-        val cookies = getCookies(url)
-        if (cookies.isNotEmpty()) {
-            requestBuilder.addHeader("Cookie", cookies)
+
+        val cookiesValue = getCookies(url)
+        if (cookiesValue.isNotEmpty()) {
+            requestBuilder.addHeader("Cookie", cookiesValue)
         }
+
         for ((headerName, headerValueList) in headers) {
-            if (headerValueList.size > 1) {
-                requestBuilder.removeHeader(headerName)
-                for (headerValue in headerValueList) {
-                    requestBuilder.addHeader(headerName, headerValue)
-                }
-            } else if (headerValueList.size == 1) {
-                requestBuilder.header(headerName, headerValueList[0])
+            requestBuilder.removeHeader(headerName)
+            for (headerValue in headerValueList) {
+                requestBuilder.addHeader(headerName, headerValue)
             }
         }
-        val response = client.newCall(requestBuilder.build()).execute()
-        if (response.code == 429) {
-            response.close()
-            throw ReCaptchaException("reCaptcha Challenge requested", url)
+
+        client.newCall(requestBuilder.build()).execute().use { response ->
+            if (response.code == 429) {
+                throw ReCaptchaException("reCaptcha Challenge requested", url)
+            }
+
+            val responseBodyToReturn = response.body?.string()
+            val latestUrl = response.request.url.toString()
+
+            return Response(
+                response.code,
+                response.message,
+                response.headers.toMultimap(),
+                responseBodyToReturn,
+                latestUrl
+            )
         }
-        val body = response.body
-        var responseBodyToReturn: String? = null
-        if (body != null) {
-            responseBodyToReturn = body.string()
-        }
-        val latestUrl = response.request.url.toString()
-        return Response(response.code, response.message, response.headers.toMultimap(),
-            responseBodyToReturn, latestUrl)
     }
 
-    private fun concatCookies(cookieStrings: Collection<String>): String {
-        val cookieSet: MutableSet<String?> = HashSet()
-        for (cookies in cookieStrings) {
-            cookieSet.addAll(splitCookies(cookies))
-        }
-        return cookieSet.joinToString("; ").trim(' ')
-    }
-
-    private fun splitCookies(cookies: String): Set<String?> {
-        return HashSet(listOf(*cookies.split("; *".toRegex()).toTypedArray()))
+    private fun splitCookies(cookies: String): List<String> {
+        return cookies.split("; *".toRegex())
     }
 
     companion object {
-        const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101 Firefox/78.0"
-        const val YOUTUBE_RESTRICTED_MODE_COOKIE_KEY = "youtube_restricted_mode_key"
-        const val YOUTUBE_DOMAIN = "youtube.com"
-        const val RECAPTCHA_COOKIES_KEY = "recaptcha_cookies"
-    }
 
+        const val USER_AGENT: String =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
+
+        const val YOUTUBE_RESTRICTED_MODE_COOKIE_KEY: String = "youtube_restricted_mode_key"
+
+        const val YOUTUBE_RESTRICTED_MODE_COOKIE: String = "PREF=f2=8000000"
+
+        const val YOUTUBE_DOMAIN: String = "youtube.com"
+
+        @JvmStatic
+        var instance: DownloaderImpl? = null
+            private set
+
+        /**
+         * It's recommended to call exactly once in the entire lifetime of the application.
+         *
+         * @param builder if null, default builder will be used
+         * @return a new instance of [DownloaderImpl]
+         */
+        @JvmStatic
+        fun init(client: OkHttpClient): DownloaderImpl {
+            val newInstance = DownloaderImpl(client)
+            instance = newInstance
+            return newInstance
+        }
+    }
 }
